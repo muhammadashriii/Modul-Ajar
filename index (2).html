@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAKL ATP Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================== DESAIN TOKEN ===================== */
+:root{
+  --navy:#132A4C; --navy-2:#1B3A63; --blue:#2E6F9E; --blue-light:#EAF2F8;
+  --bg:#F5F8FB; --surface:#FFFFFF; --border:#DCE4EC;
+  --text:#1F2937; --text-soft:#5B6B7C; --amber:#B7791F; --green:#2F7D5E; --red:#B3423A;
+  --radius:6px; --font-head:'Lexend',sans-serif; --font-body:'Source Sans 3',sans-serif;
+}
+[data-theme="dark"]{
+  --navy:#0E1B2E; --navy-2:#132A4C; --blue:#5B9BD5; --blue-light:#16283E;
+  --bg:#0F1621; --surface:#16202E; --border:#28384A;
+  --text:#E6ECF2; --text-soft:#93A3B5; --amber:#D9A441; --green:#4FAE86; --red:#E0685D;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--text);}
+h1,h2,h3,h4{font-family:var(--font-head);color:var(--navy);margin:0 0 6px;}
+[data-theme="dark"] h1,[data-theme="dark"] h2,[data-theme="dark"] h3,[data-theme="dark"] h4{color:#EAF2F8;}
+p{color:var(--text-soft);line-height:1.55;}
+button{font-family:var(--font-body);cursor:pointer;}
+input,select,textarea{font-family:var(--font-body);}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+/* Layout */
+.app{display:flex;min-height:100vh;}
+.sidebar{width:230px;background:var(--navy);color:#CBD9E8;flex-shrink:0;position:fixed;top:0;bottom:0;left:0;overflow-y:auto;transition:transform .2s;z-index:50;}
+.sidebar .brand{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sidebar .brand strong{color:#fff;font-family:var(--font-head);font-size:15px;display:block;}
+.sidebar .brand span{font-size:11px;color:#8FA6BE;}
+.sidebar nav{padding:10px;}
+.sidebar a{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);color:#CBD9E8;text-decoration:none;font-size:14px;margin-bottom:2px;}
+.sidebar a:hover{background:rgba(255,255,255,.06);}
+.sidebar a.active{background:var(--blue);color:#fff;}
+.main{margin-left:230px;flex:1;padding:24px 28px 60px;min-width:0;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px;flex-wrap:wrap;}
+.topbar h1{font-size:20px;}
+.icon-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px 12px;font-size:13px;color:var(--text);}
+.menu-toggle{display:none;background:var(--navy);color:#fff;border:none;border-radius:var(--radius);padding:8px 10px;font-size:16px;}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* Cards / panels */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:18px;}
+.panel-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:14px;border-left:3px solid var(--blue);padding-left:10px;}
+[data-theme="dark"] .panel-title{color:#EAF2F8;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:var(--radius);padding:16px;}
+.stat .num{font-family:var(--font-head);font-size:26px;font-weight:700;color:var(--navy);}
+[data-theme="dark"] .stat .num{color:#EAF2F8;}
+.stat .lbl{font-size:12.5px;color:var(--text-soft);}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;border-radius:var(--radius);padding:32px;margin-bottom:22px;}
+.hero h1{color:#fff;font-size:26px;}
+.hero p{color:#C3D3E3;max-width:640px;}
+.btn{border:none;border-radius:var(--radius);padding:10px 16px;font-size:13.5px;font-weight:600;background:var(--blue);color:#fff;}
+.btn:hover{background:var(--navy-2);}
+.btn.secondary{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;}
+.btn.secondary:hover{background:rgba(255,255,255,.12);}
+.btn.outline{background:transparent;border:1px solid var(--blue);color:var(--blue);}
+.btn.outline:hover{background:var(--blue-light);}
+.btn.ghost{background:transparent;color:var(--text-soft);border:1px solid var(--border);padding:6px 10px;font-size:12.5px;}
+.btn.danger{background:var(--red);}
+.btn.small{padding:5px 9px;font-size:12px;border-radius:5px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* Form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;}
+.form-grid.cols-3{grid-template-columns:1fr 1fr 1fr;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12.5px;font-weight:600;color:var(--text-soft);}
+.field .req{color:var(--red);}
+.field input,.field select,.field textarea{padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13.5px;}
+.field textarea{resize:vertical;min-height:60px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--blue);outline-offset:1px;}
+.err-msg{background:#FDEDEC;border:1px solid var(--red);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:14px;}
+[data-theme="dark"] .err-msg{background:#3A1E1C;}
+
+/* Table */
+.table-wrap{overflow-x:auto;}
+table.atp-table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:920px;}
+table.atp-table th{background:var(--blue-light);color:var(--navy);text-align:left;padding:9px 8px;border:1px solid var(--border);font-family:var(--font-head);font-size:11.5px;}
+[data-theme="dark"] table.atp-table th{color:#EAF2F8;}
+table.atp-table td{padding:8px;border:1px solid var(--border);vertical-align:top;}
+table.atp-table tr.dragging{opacity:.4;}
+.row-actions{display:flex;gap:4px;flex-wrap:wrap;}
+.chip{display:inline-block;background:var(--blue-light);color:var(--blue);border-radius:10px;padding:2px 9px;font-size:11px;margin:2px 3px 0 0;cursor:pointer;border:1px solid transparent;}
+.chip.active-chip{background:var(--blue);color:#fff;}
+.chip.del{background:transparent;border:1px solid var(--border);color:var(--text-soft);}
+.badge-check{display:inline-block;font-size:10.5px;background:#FFF6E5;color:var(--amber);border:1px solid var(--amber);border-radius:4px;padding:1px 6px;margin-left:4px;}
+[data-theme="dark"] .badge-check{background:#3A2E14;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(10,20,35,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px;}
+.overlay.show{display:flex;}
+.modal{background:var(--surface);border-radius:8px;max-width:640px;width:100%;max-height:88vh;overflow-y:auto;padding:22px;}
+.modal h3{margin-bottom:14px;}
+.modal-close{float:right;background:none;border:none;font-size:18px;color:var(--text-soft);}
+
+/* Toast */
+#toast{position:fixed;bottom:22px;right:22px;background:var(--navy);color:#fff;padding:12px 18px;border-radius:6px;font-size:13.5px;z-index:200;opacity:0;transform:translateY(10px);transition:.25s;pointer-events:none;}
+#toast.show{opacity:1;transform:translateY(0);}
+
+/* Preview document */
+.doc-page{background:#fff;color:#111;max-width:850px;margin:0 auto;padding:40px 46px;border:1px solid var(--border);font-size:13px;}
+.doc-page h2{color:#111;text-align:center;font-size:17px;margin-bottom:2px;}
+.doc-page .sub{text-align:center;color:#333;margin-bottom:18px;font-size:13px;}
+.doc-meta{width:100%;margin-bottom:14px;font-size:12.5px;}
+.doc-meta td{padding:1px 4px;color:#111;}
+.sign-block{display:flex;justify-content:space-between;margin-top:46px;font-size:12.5px;text-align:center;}
+.sign-block .col{width:45%;}
+.sign-line{margin-top:60px;font-weight:600;border-top:1px solid #111;display:inline-block;padding-top:2px;}
+
+/* Materi chips page */
+.materi-list{display:flex;flex-wrap:wrap;gap:8px;}
+.materi-item{background:var(--blue-light);color:var(--navy);border-radius:6px;padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:8px;}
+[data-theme="dark"] .materi-item{color:#EAF2F8;}
+.materi-item button{background:none;border:none;color:var(--red);font-size:13px;}
+
+/* progress */
+.progress{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:10px 0;}
+.progress > div{height:100%;background:var(--blue);width:0%;transition:width .3s;}
+
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%);}
+  .sidebar.open{transform:translateX(0);}
+  .main{margin-left:0;padding:18px;}
+  .menu-toggle{display:inline-block;}
+  .form-grid,.form-grid.cols-3{grid-template-columns:1fr;}
+}
+/* Login */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy) 0%,var(--navy-2) 60%,var(--blue) 100%);display:flex;align-items:center;justify-content:center;z-index:300;padding:18px;}
+.login-card{background:var(--surface);border-radius:10px;max-width:420px;width:100%;padding:32px 30px;}
+.login-card h1{font-size:20px;text-align:center;}
+.login-card .sub{text-align:center;font-size:13px;margin-bottom:20px;}
+.role-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 18px;}
+.role-opt{border:2px solid var(--border);border-radius:8px;padding:16px 10px;text-align:center;background:var(--bg);}
+.role-opt .ic{font-size:26px;display:block;margin-bottom:6px;}
+.role-opt.selected{border-color:var(--blue);background:var(--blue-light);}
+.login-card .field{margin-bottom:14px;}
+.user-badge{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-soft);}
+.user-badge .role-tag{background:var(--blue-light);color:var(--blue);border-radius:10px;padding:2px 9px;font-size:11px;font-weight:600;}
+body.siswa-mode .no-siswa{display:none!important;}
+
+@media print{
+  .sidebar,.topbar,.no-print{display:none!important;}
+  .main{margin-left:0;padding:0;}
+  .page{display:none!important;}
+  .page.printing{display:block!important;}
+  .doc-page{border:none;max-width:100%;padding:0;}
+  body{background:#fff;}
+}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>DAKL ATP Generator</h1>
+    <div class="sub" style="color:var(--text-soft);">Masuk sebagai Guru atau Siswa untuk melanjutkan</div>
+    <div class="field"><label style="font-size:12.5px;font-weight:600;color:var(--text-soft);">Nama</label>
+      <input id="login_nama" placeholder="Masukkan nama Anda" style="width:100%;padding:9px 10px;border:1px solid var(--border);border-radius:6px;margin-top:4px;">
+    </div>
+    <div class="role-grid">
+      <div class="role-opt" id="role_guru" onclick="pickRole('guru')"><span class="ic">👩‍🏫</span>Guru</div>
+      <div class="role-opt" id="role_siswa" onclick="pickRole('siswa')"><span class="ic">🎓</span>Siswa</div>
+    </div>
+    <div id="loginError" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none;">Pilih peran dan isi nama terlebih dahulu.</div>
+    <button class="btn" style="width:100%;" onclick="doLogin()">Masuk</button>
+    <p style="font-size:11.5px;text-align:center;margin-top:14px;">Guru: kelola & buat ATP. Siswa: melihat ATP dan dokumen yang sudah dibagikan guru.</p>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><strong>DAKL ATP Generator</strong><span>Perangkat Pembelajaran DAKL Kelas X</span></div>
+    <nav id="navLinks">
+      <a href="#" data-page="beranda" class="active">🏠 Beranda</a>
+      <a href="#" data-page="buat">📝 Buat ATP</a>
+      <a href="#" data-page="data">📁 Data ATP</a>
+      <a href="#" data-page="materi">📚 Materi DAKL</a>
+      <a href="#" data-page="preview">👁 Preview</a>
+      <a href="#" data-page="panduan">❓ Panduan</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button class="menu-toggle" id="menuToggle">☰</button>
+        <h1 id="pageTitle">Beranda</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="user-badge" id="userBadge"></span>
+        <button class="icon-btn" id="darkToggle">🌙 Mode Gelap</button>
+        <button class="icon-btn" onclick="doLogout()">🚪 Keluar</button>
+      </div>
+    </div>
+
+    <!-- ===================== BERANDA ===================== -->
+    <section class="page active" id="page-beranda">
+      <div class="hero">
+        <h1>DAKL ATP Generator</h1>
+        <p>Generator Alur Tujuan Pembelajaran untuk mata pelajaran Dasar-Dasar Akuntansi dan Keuangan Lembaga, Kelas X SMK. Isi data pembelajaran sekali, sistem menyusun ATP dalam format tabel siap pakai dan siap cetak.</p>
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn secondary no-siswa" data-nav="buat">Buat ATP</button>
+          <button class="btn secondary" data-nav="data">Lihat Contoh ATP</button>
+          <button class="btn secondary" data-nav="panduan">Panduan Penggunaan</button>
+        </div>
+      </div>
+      <div class="stat-grid">
+        <div class="stat"><div class="num" id="statTotal">0</div><div class="lbl">ATP telah dibuat</div></div>
+        <div class="stat"><div class="num" id="statDocs">0</div><div class="lbl">Dokumen tersimpan</div></div>
+        <div class="stat"><div class="num" id="statMateri">0</div><div class="lbl">Materi tersedia</div></div>
+        <div class="stat"><div class="num" id="statLast" style="font-size:14px;">-</div><div class="lbl">ATP terakhir dibuat</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Mulai cepat</div>
+        <button class="btn no-siswa" data-nav="buat">+ Buat Perangkat Baru</button>
+      </div>
+    </section>
+
+    <!-- ===================== BUAT ATP ===================== -->
+    <section class="page" id="page-buat">
+      <div class="panel">
+        <div class="panel-title">A. Identitas Satuan Pendidikan</div>
+        <div id="formErrors"></div>
+        <div class="form-grid cols-3">
+          <div class="field"><label>Nama Sekolah <span class="req">*</span></label><input id="f_sekolah"></div>
+          <div class="field"><label>Nama Guru <span class="req">*</span></label><input id="f_guru"></div>
+          <div class="field"><label>NIP / NUPTK</label><input id="f_nip"></div>
+          <div class="field"><label>Mata Pelajaran <span class="req">*</span></label><input id="f_mapel" value="Dasar-Dasar Akuntansi dan Keuangan Lembaga"></div>
+          <div class="field"><label>Fase <span class="req">*</span></label><input id="f_fase" value="E"></div>
+          <div class="field"><label>Kelas <span class="req">*</span></label><input id="f_kelas" value="X"></div>
+          <div class="field"><label>Tahun Pelajaran <span class="req">*</span></label><input id="f_tapel" placeholder="2026/2027"></div>
+          <div class="field"><label>Semester <span class="req">*</span></label>
+            <select id="f_semester"><option>Ganjil</option><option>Genap</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">B. Informasi Kurikulum</div>
+        <div class="form-grid">
+          <div class="field"><label>Kurikulum</label>
+            <select id="f_kurikulum"><option>Kurikulum Merdeka</option><option>Kurikulum Merdeka (Mandiri Berubah)</option></select>
+          </div>
+          <div class="field"><label>Elemen</label><input id="f_elemen" placeholder="mis. Proses Bisnis Akuntansi dan Keuangan Lembaga"></div>
+          <div class="field" style="grid-column:1/-1;"><label>Capaian Pembelajaran (CP) <span class="req">*</span></label>
+            <textarea id="f_cp" placeholder="Tulis CP manual atau pilih template di bawah"></textarea>
+          </div>
+          <div class="field" style="grid-column:1/-1;">
+            <label>Template CP cepat</label>
+            <div class="btn-row">
+              <button class="btn outline small" onclick="applyTemplateCP()">Gunakan template CP DAKL Fase E</button>
+            </div>
+          </div>
+          <div class="field"><label>Alokasi Waktu Total <span class="req">*</span></label><input id="f_alokasi" placeholder="mis. 216 JP"></div>
+          <div class="field"><label>Jumlah Pertemuan</label><input id="f_pertemuan" type="number" min="1" placeholder="mis. 18"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">C. Generator Tujuan Pembelajaran (KKO)</div>
+        <p style="margin-top:-6px;">Susun kalimat Tujuan Pembelajaran otomatis, lalu edit bebas sebelum ditambahkan ke tabel ATP.</p>
+        <div class="form-grid cols-3">
+          <div class="field"><label>Kata Kerja Operasional</label>
+            <select id="tp_kko">
+              <option>mengidentifikasi</option><option>menjelaskan</option><option>mengklasifikasikan</option>
+              <option>menganalisis</option><option>mencatat</option><option>menghitung</option>
+              <option>menyusun</option><option>menerapkan</option><option>mengevaluasi</option>
+            </select>
+          </div>
+          <div class="field"><label>Materi / Kompetensi</label>
+            <select id="tp_materi"></select>
+          </div>
+          <div class="field"><label>Tingkat Kemampuan</label>
+            <select id="tp_tingkat"><option>Pemahaman dasar</option><option>Penerapan</option><option>Analisis lanjut</option></select>
+          </div>
+          <div class="field" style="grid-column:1/-1;"><label>Konteks / Kondisi</label><input id="tp_kondisi" placeholder="mis. melalui studi kasus transaksi perusahaan jasa"></div>
+        </div>
+        <div class="btn-row" style="margin:10px 0;">
+          <button class="btn outline small" onclick="generateTPText()">Buat Kalimat Tujuan Pembelajaran</button>
+        </div>
+        <div class="field"><textarea id="tp_hasil" placeholder="Hasil kalimat tujuan pembelajaran akan muncul di sini..."></textarea></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">D. Tabel ATP</div>
+        <div class="btn-row" style="margin-bottom:12px;">
+          <button class="btn" onclick="openRowModal()">+ Tambah Tujuan Pembelajaran</button>
+          <button class="btn outline" onclick="openAiModal()">✨ Generate Draf ATP Otomatis</button>
+          <button class="btn ghost" onclick="resetForm()">Reset Form</button>
+        </div>
+        <div class="table-wrap">
+          <table class="atp-table" id="atpTable">
+            <thead><tr>
+              <th>No</th><th>Elemen</th><th>CP</th><th>Tujuan Pembelajaran</th><th>Materi</th>
+              <th>Kegiatan Pembelajaran</th><th>Alokasi Waktu</th><th>Asesmen</th><th>Sumber Belajar</th><th class="no-print">Aksi</th>
+            </tr></thead>
+            <tbody id="atpTbody"></tbody>
+          </table>
+        </div>
+        <div class="btn-row" style="margin-top:16px;">
+          <button class="btn" onclick="saveATP()">💾 Simpan ATP</button>
+          <button class="btn outline" onclick="renderPreviewFromDraft(); navigate('preview')">👁 Pratinjau Dokumen</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== DATA ATP ===================== -->
+    <section class="page" id="page-data">
+      <div class="panel">
+        <div class="panel-title">Data ATP Tersimpan</div>
+        <div class="form-grid cols-3" style="margin-bottom:12px;">
+          <div class="field"><label>Cari</label><input id="filterSearch" placeholder="Cari nama sekolah / guru..." oninput="renderATPList()"></div>
+          <div class="field"><label>Kelas</label><select id="filterKelas" onchange="renderATPList()"><option value="">Semua</option><option>X</option></select></div>
+          <div class="field"><label>Semester</label><select id="filterSemester" onchange="renderATPList()"><option value="">Semua</option><option>Ganjil</option><option>Genap</option></select></div>
+        </div>
+        <div id="atpListWrap"></div>
+      </div>
+    </section>
+
+    <!-- ===================== MATERI ===================== -->
+    <section class="page" id="page-materi">
+      <div class="panel">
+        <div class="panel-title">Template Materi DAKL Kelas X</div>
+        <div class="btn-row" style="margin-bottom:14px;">
+          <input id="newMateri" placeholder="Tambah materi baru..." style="padding:9px 10px;border:1px solid var(--border);border-radius:6px;min-width:260px;">
+          <button class="btn small" onclick="addMateri()">+ Tambah</button>
+        </div>
+        <div class="materi-list" id="materiList"></div>
+      </div>
+    </section>
+
+    <!-- ===================== PREVIEW ===================== -->
+    <section class="page" id="page-preview">
+      <div class="btn-row no-print" style="margin-bottom:16px;">
+        <button class="btn" onclick="window.print()">🖨 Print / Simpan PDF</button>
+        <button class="btn outline" onclick="exportWord()">⬇ Download Word</button>
+        <button class="btn outline" onclick="exportExcel()">⬇ Download Excel</button>
+        <button class="btn outline" onclick="copyTable()">📋 Copy Table</button>
+      </div>
+      <div class="doc-page" id="docPage">
+        <p style="text-align:center;color:#888;">Belum ada ATP untuk dipratinjau. Buat ATP terlebih dahulu.</p>
+      </div>
+    </section>
+
+    <!-- ===================== PANDUAN ===================== -->
+    <section class="page" id="page-panduan">
+      <div class="panel">
+        <div class="panel-title">Panduan Penggunaan</div>
+        <ol style="color:var(--text-soft);line-height:1.9;">
+          <li>Buka menu <b>Buat ATP</b>, lengkapi identitas sekolah dan informasi kurikulum.</li>
+          <li>Gunakan <b>Generator Tujuan Pembelajaran</b> untuk menyusun kalimat TP dari kata kerja operasional, lalu edit sesuai kebutuhan.</li>
+          <li>Klik <b>+ Tambah Tujuan Pembelajaran</b> untuk memasukkan satu baris ATP, atau gunakan <b>Generate Draf ATP Otomatis</b> untuk draf beberapa baris sekaligus dari daftar materi.</li>
+          <li>Atur urutan baris dengan tombol naik/turun atau seret (drag) baris pada tabel.</li>
+          <li>Klik <b>Simpan ATP</b>. Data tersimpan di penyimpanan lokal peramban (localStorage), sehingga tetap ada walau halaman dimuat ulang.</li>
+          <li>Buka menu <b>Data ATP</b> untuk mencari, memfilter, menduplikasi, atau menghapus dokumen.</li>
+          <li>Buka menu <b>Preview</b> untuk melihat dokumen resmi, lalu cetak, atau unduh sebagai Word/Excel.</li>
+        </ol>
+        <p><i>Catatan: draf otomatis disusun dari template kalimat, bukan hasil AI generatif eksternal. Bagian yang bertanda "Perlu diverifikasi" wajib diperiksa dan disesuaikan oleh guru sebelum digunakan.</i></p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal tambah/edit baris ATP -->
+<div class="overlay" id="rowModalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeRowModal()">✕</button>
+    <h3 id="rowModalTitle">Tambah Tujuan Pembelajaran</h3>
+    <div class="form-grid">
+      <div class="field" style="grid-column:1/-1;"><label>Elemen</label><input id="row_elemen"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Capaian Pembelajaran</label><textarea id="row_cp"></textarea></div>
+      <div class="field" style="grid-column:1/-1;"><label>Tujuan Pembelajaran <span class="req">*</span></label><textarea id="row_tp"></textarea></div>
+      <div class="field" style="grid-column:1/-1;"><label>Materi Pembelajaran <span class="req">*</span></label><input id="row_materi"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Kegiatan Pembelajaran</label><textarea id="row_kegiatan" placeholder="mis. Model Problem Based Learning: mengamati, mendiskusikan, mempraktikkan, mempresentasikan..."></textarea></div>
+      <div class="field"><label>Alokasi Waktu <span class="req">*</span></label><input id="row_alokasi" placeholder="mis. 12 JP"></div>
+      <div class="field"><label>Asesmen</label><input id="row_asesmen" placeholder="mis. Tes tertulis, praktik, observasi"></div>
+      <div class="field" style="grid-column:1/-1;"><label>Sumber Belajar</label><input id="row_sumber" placeholder="mis. Buku DAKL, LKPD, internet"></div>
+    </div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn" onclick="saveRow()">Simpan Baris</button>
+      <button class="btn ghost" onclick="closeRowModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal generate draf otomatis -->
+<div class="overlay" id="aiModalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAiModal()">✕</button>
+    <h3>Generate Draf ATP Otomatis</h3>
+    <p style="margin-top:-8px;">Sistem menyusun draf baris ATP dari template berbasis materi yang dipilih. Hasil tetap harus diperiksa dan disesuaikan guru.</p>
+    <div class="field"><label>Pilih Materi (klik untuk memilih, bisa lebih dari satu)</label><div class="materi-list" id="aiMateriPicker"></div></div>
+    <div class="form-grid" style="margin-top:12px;">
+      <div class="field"><label>Model Pembelajaran</label>
+        <select id="ai_model"><option>Discovery Learning</option><option>Problem Based Learning</option><option>Project Based Learning</option></select>
+      </div>
+      <div class="field"><label>Jumlah Pertemuan per Materi</label><input id="ai_pertemuan" type="number" min="1" value="1"></div>
+      <div class="field"><label>Alokasi Waktu per Pertemuan</label><input id="ai_alokasi" placeholder="mis. 4 JP"></div>
+      <div class="field"><label>Karakteristik Siswa</label><input id="ai_karakter" placeholder="mis. gaya belajar campuran, kemampuan awal beragam"></div>
+    </div>
+    <div class="progress no-print" id="aiProgress"><div id="aiProgressBar"></div></div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn" onclick="runAiGenerate()">Generate</button>
+      <button class="btn ghost" onclick="closeAiModal()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal konfirmasi -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="max-width:380px;">
+    <p id="confirmMsg" style="color:var(--text);">Yakin ingin melanjutkan?</p>
+    <div class="btn-row">
+      <button class="btn danger" id="confirmYes">Ya, lanjutkan</button>
+      <button class="btn ghost" onclick="closeConfirm()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ======================================================================
+   DAKL ATP GENERATOR — LOGIKA APLIKASI (vanilla JS, tanpa backend)
+   Semua data disimpan di localStorage agar tetap ada setelah refresh.
+   ====================================================================== */
+const LS = { LIST:'dakl_atp_list', DRAFT:'dakl_draft', MATERI:'dakl_materi_list', THEME:'dakl_theme', USER:'dakl_user' };
+let selectedRole = null;
+
+/* ---------- login & peran ---------- */
+function pickRole(role){
+  selectedRole = role;
+  document.getElementById('role_guru').classList.toggle('selected', role==='guru');
+  document.getElementById('role_siswa').classList.toggle('selected', role==='siswa');
+}
+function doLogin(){
+  const nama = document.getElementById('login_nama').value.trim();
+  if(!nama || !selectedRole){ document.getElementById('loginError').style.display='block'; return; }
+  document.getElementById('loginError').style.display='none';
+  const user = { nama, role: selectedRole };
+  saveJSON(LS.USER, user);
+  enterApp(user);
+}
+function doLogout(){
+  askConfirm('Keluar dari aplikasi?', ()=>{
+    localStorage.removeItem(LS.USER);
+    document.getElementById('appRoot').style.display='none';
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('login_nama').value=''; selectedRole=null;
+    document.getElementById('role_guru').classList.remove('selected');
+    document.getElementById('role_siswa').classList.remove('selected');
+  });
+}
+function enterApp(user){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('appRoot').style.display='flex';
+  document.getElementById('userBadge').innerHTML = `👤 ${escapeHtml(user.nama)} <span class="role-tag">${user.role==='guru'?'Guru':'Siswa'}</span>`;
+  applyRoleUI(user.role);
+  navigate(user.role==='siswa' ? 'beranda' : 'beranda');
+}
+/* Siswa: hanya boleh melihat (Beranda, Data ATP - baca saja, Preview, Panduan). Guru: akses penuh. */
+function applyRoleUI(role){
+  const isSiswa = role==='siswa';
+  document.querySelectorAll('#navLinks a[data-page="buat"], #navLinks a[data-page="materi"]').forEach(a=>{ a.style.display = isSiswa ? 'none' : 'flex'; });
+  document.body.classList.toggle('siswa-mode', isSiswa);
+}
+const DEFAULT_MATERI = ["Konsep dasar akuntansi","Profesi dan etika akuntansi","Persamaan dasar akuntansi",
+"Transaksi bisnis","Analisis transaksi","Bukti transaksi","Jurnal umum","Buku besar","Neraca saldo","Penyesuaian",
+"Siklus akuntansi perusahaan jasa","Siklus akuntansi perusahaan dagang","Dokumen transaksi","Akuntansi komputer",
+"Spreadsheet untuk akuntansi","Pengenalan aplikasi akuntansi","Keselamatan dan kesehatan kerja di bidang akuntansi",
+"Budaya kerja di bidang Akuntansi dan Keuangan Lembaga"];
+const TEMPLATE_CP = "Pada akhir fase E, peserta didik mampu memahami proses bisnis, profesi, dan etika profesi bidang akuntansi dan keuangan lembaga, memahami perkembangan teknologi di dunia kerja, menerapkan persamaan dasar akuntansi, siklus akuntansi perusahaan jasa dan dagang, serta menerapkan keselamatan dan kesehatan kerja (K3) dalam lingkup pekerjaan akuntansi dan keuangan lembaga.";
+
+let draft = emptyDraft();
+let editingRowIndex = null;
+let aiSelectedMateri = [];
+let confirmCallback = null;
+
+function emptyDraft(){
+  return { id:null, identitas:{sekolah:"",guru:"",nip:"",mapel:"Dasar-Dasar Akuntansi dan Keuangan Lembaga",fase:"E",kelas:"X",tapel:"",semester:"Ganjil"},
+    kurikulum:{kurikulum:"Kurikulum Merdeka",elemen:"",cp:"",alokasi:"",pertemuan:""}, rows:[] };
+}
+
+/* ---------- util penyimpanan ---------- */
+function loadJSON(key, fallback){ try{ const v = localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } }
+function saveJSON(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ console.error(e); toast("Gagal menyimpan data (penyimpanan penuh?)"); return false; } }
+function getList(){ return loadJSON(LS.LIST, []); }
+function getMateri(){ return loadJSON(LS.MATERI, DEFAULT_MATERI); }
+
+/* ---------- navigasi ---------- */
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('#navLinks a').forEach(a=>a.classList.toggle('active', a.dataset.page===page));
+  const titles = {beranda:'Beranda', buat:'Buat ATP', data:'Data ATP', materi:'Materi DAKL', preview:'Preview Dokumen', panduan:'Panduan'};
+  document.getElementById('pageTitle').textContent = titles[page]||'';
+  if(page==='beranda') renderDashboard();
+  if(page==='data') renderATPList();
+  if(page==='materi') renderMateriList();
+  if(page==='buat') { fillMateriSelects(); renderRowsTable(); }
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo(0,0);
+}
+document.getElementById('navLinks').addEventListener('click', e=>{
+  const a = e.target.closest('a'); if(!a) return; e.preventDefault(); navigate(a.dataset.page);
+});
+document.querySelectorAll('[data-nav]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.nav)));
+document.getElementById('menuToggle').addEventListener('click', ()=>document.getElementById('sidebar').classList.toggle('open'));
+
+/* ---------- dark mode ---------- */
+function applyTheme(){
+  const t = localStorage.getItem(LS.THEME) || 'light';
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('darkToggle').textContent = t==='dark' ? '☀ Mode Terang' : '🌙 Mode Gelap';
+}
+document.getElementById('darkToggle').addEventListener('click', ()=>{
+  const cur = localStorage.getItem(LS.THEME)||'light';
+  localStorage.setItem(LS.THEME, cur==='dark'?'light':'dark');
+  applyTheme();
+});
+
+/* ---------- toast & confirm ---------- */
+function toast(msg){
+  const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(window._toastTimer); window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function askConfirm(msg, cb){
+  document.getElementById('confirmMsg').textContent = msg;
+  confirmCallback = cb;
+  document.getElementById('confirmOverlay').classList.add('show');
+}
+function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('show'); confirmCallback=null; }
+document.getElementById('confirmYes').addEventListener('click', ()=>{ if(confirmCallback) confirmCallback(); closeConfirm(); });
+
+/* ---------- dashboard ---------- */
+function renderDashboard(){
+  const list = getList();
+  document.getElementById('statTotal').textContent = list.reduce((n,d)=>n+d.rows.length,0);
+  document.getElementById('statDocs').textContent = list.length;
+  document.getElementById('statMateri').textContent = getMateri().length;
+  const last = list.slice().sort((a,b)=>b.updatedAt-a.updatedAt)[0];
+  document.getElementById('statLast').textContent = last ? (last.identitas.mapel+' • '+new Date(last.updatedAt).toLocaleDateString('id-ID')) : '-';
+}
+
+/* ---------- materi ---------- */
+function renderMateriList(){
+  const wrap = document.getElementById('materiList'); wrap.innerHTML='';
+  getMateri().forEach((m,i)=>{
+    const el = document.createElement('div'); el.className='materi-item';
+    el.innerHTML = `<span>${escapeHtml(m)}</span><button onclick="deleteMateri(${i})" title="Hapus">✕</button>`;
+    wrap.appendChild(el);
+  });
+}
+function addMateri(){
+  const inp = document.getElementById('newMateri'); const v = inp.value.trim();
+  if(!v){ toast('Isi nama materi terlebih dahulu'); return; }
+  const list = getMateri(); list.push(v); saveJSON(LS.MATERI, list); inp.value='';
+  renderMateriList(); fillMateriSelects(); toast('Materi ditambahkan');
+}
+function deleteMateri(i){
+  askConfirm('Hapus materi ini dari daftar?', ()=>{
+    const list = getMateri(); list.splice(i,1); saveJSON(LS.MATERI, list);
+    renderMateriList(); fillMateriSelects(); toast('Materi dihapus');
+  });
+}
+function fillMateriSelects(){
+  const sel = document.getElementById('tp_materi'); if(sel){ sel.innerHTML = getMateri().map(m=>`<option>${escapeHtml(m)}</option>`).join(''); }
+}
+
+/* ---------- template CP ---------- */
+function applyTemplateCP(){ document.getElementById('f_cp').value = TEMPLATE_CP; toast('Template CP diterapkan, silakan sesuaikan'); }
+
+/* ---------- generator kalimat TP ---------- */
+function generateTPText(){
+  const kko = document.getElementById('tp_kko').value;
+  const materi = document.getElementById('tp_materi').value;
+  const tingkat = document.getElementById('tp_tingkat').value.toLowerCase();
+  const kondisi = document.getElementById('tp_kondisi').value.trim() || 'melalui kegiatan pembelajaran di kelas';
+  const kriteria = 'secara tepat sesuai prosedur akuntansi yang berlaku';
+  const kalimat = `Peserta didik mampu ${kko} ${materi.toLowerCase()} pada tingkat ${tingkat} ${kondisi}, ${kriteria}.`;
+  document.getElementById('tp_hasil').value = kalimat;
+}
+
+/* ---------- baris ATP (modal) ---------- */
+function openRowModal(prefill){
+  editingRowIndex = (prefill && typeof prefill.index==='number') ? prefill.index : null;
+  document.getElementById('rowModalTitle').textContent = editingRowIndex===null ? 'Tambah Tujuan Pembelajaran' : 'Edit Baris ATP';
+  const r = prefill || {};
+  document.getElementById('row_elemen').value = r.elemen || document.getElementById('f_elemen').value;
+  document.getElementById('row_cp').value = r.cp || '';
+  document.getElementById('row_tp').value = r.tp || document.getElementById('tp_hasil').value;
+  document.getElementById('row_materi').value = r.materi || document.getElementById('tp_materi').value;
+  document.getElementById('row_kegiatan').value = r.kegiatan || '';
+  document.getElementById('row_alokasi').value = r.alokasi || '';
+  document.getElementById('row_asesmen').value = r.asesmen || '';
+  document.getElementById('row_sumber').value = r.sumber || '';
+  document.getElementById('rowModalOverlay').classList.add('show');
+}
+function closeRowModal(){ document.getElementById('rowModalOverlay').classList.remove('show'); editingRowIndex=null; }
+function saveRow(){
+  const tp = document.getElementById('row_tp').value.trim();
+  const materi = document.getElementById('row_materi').value.trim();
+  const alokasi = document.getElementById('row_alokasi').value.trim();
+  if(!tp || !materi || !alokasi){ toast('Tujuan Pembelajaran, Materi, dan Alokasi Waktu wajib diisi'); return; }
+  const row = {
+    elemen: document.getElementById('row_elemen').value.trim(),
+    cp: document.getElementById('row_cp').value.trim(),
+    tp, materi,
+    kegiatan: document.getElementById('row_kegiatan').value.trim(),
+    alokasi,
+    asesmen: document.getElementById('row_asesmen').value.trim(),
+    sumber: document.getElementById('row_sumber').value.trim()
+  };
+  if(editingRowIndex===null) draft.rows.push(row); else draft.rows[editingRowIndex] = row;
+  closeRowModal(); autosaveDraft(); renderRowsTable(); toast('Baris ATP disimpan');
+}
+function deleteRowAt(i){ askConfirm('Hapus baris tujuan pembelajaran ini?', ()=>{ draft.rows.splice(i,1); autosaveDraft(); renderRowsTable(); toast('Baris dihapus'); }); }
+function duplicateRowAt(i){ draft.rows.splice(i+1,0, JSON.parse(JSON.stringify(draft.rows[i]))); autosaveDraft(); renderRowsTable(); toast('Baris diduplikasi'); }
+function moveRowAt(i, dir){
+  const j = i+dir; if(j<0 || j>=draft.rows.length) return;
+  [draft.rows[i], draft.rows[j]] = [draft.rows[j], draft.rows[i]];
+  autosaveDraft(); renderRowsTable();
+}
+
+function renderRowsTable(){
+  const tbody = document.getElementById('atpTbody'); tbody.innerHTML='';
+  if(draft.rows.length===0){ tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-soft);">Belum ada baris. Klik "+ Tambah Tujuan Pembelajaran".</td></tr>`; return; }
+  draft.rows.forEach((r,i)=>{
+    const tr = document.createElement('tr');
+    tr.draggable = true; tr.dataset.idx = i;
+    tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(r.elemen)}</td><td>${escapeHtml(r.cp)}</td><td>${escapeHtml(r.tp)}${r.verify?'<span class="badge-check">Perlu diverifikasi</span>':''}</td>
+      <td>${escapeHtml(r.materi)}</td><td>${escapeHtml(r.kegiatan)}</td><td>${escapeHtml(r.alokasi)}</td><td>${escapeHtml(r.asesmen)}</td><td>${escapeHtml(r.sumber)}</td>
+      <td class="no-print"><div class="row-actions">
+        <button class="btn ghost small" onclick="openRowModal(Object.assign({index:${i}}, draft.rows[${i}]))">Edit</button>
+        <button class="btn ghost small" onclick="duplicateRowAt(${i})">Duplikasi</button>
+        <button class="btn ghost small" onclick="moveRowAt(${i},-1)">↑</button>
+        <button class="btn ghost small" onclick="moveRowAt(${i},1)">↓</button>
+        <button class="btn ghost small" onclick="deleteRowAt(${i})" style="color:var(--red);">Hapus</button>
+      </div></td>`;
+    tbody.appendChild(tr);
+  });
+  attachDragEvents();
+}
+function attachDragEvents(){
+  const tbody = document.getElementById('atpTbody'); let dragIdx=null;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    tr.addEventListener('dragstart', ()=>{ dragIdx = +tr.dataset.idx; tr.classList.add('dragging'); });
+    tr.addEventListener('dragend', ()=>{ tr.classList.remove('dragging'); });
+    tr.addEventListener('dragover', e=>e.preventDefault());
+    tr.addEventListener('drop', ()=>{
+      const dropIdx = +tr.dataset.idx;
+      if(dragIdx===null || dragIdx===dropIdx) return;
+      const item = draft.rows.splice(dragIdx,1)[0];
+      draft.rows.splice(dropIdx,0,item);
+      autosaveDraft(); renderRowsTable();
+    });
+  });
+}
+
+/* ---------- generate draf otomatis (berbasis template, bukan API eksternal) ---------- */
+function openAiModal(){
+  aiSelectedMateri = [];
+  const wrap = document.getElementById('aiMateriPicker'); wrap.innerHTML='';
+  getMateri().forEach(m=>{
+    const chip = document.createElement('span'); chip.className='chip'; chip.textContent = m;
+    chip.onclick = ()=>{ chip.classList.toggle('active-chip'); const idx = aiSelectedMateri.indexOf(m);
+      if(idx>-1) aiSelectedMateri.splice(idx,1); else aiSelectedMateri.push(m); };
+    wrap.appendChild(chip);
+  });
+  document.getElementById('aiModalOverlay').classList.add('show');
+}
+function closeAiModal(){ document.getElementById('aiModalOverlay').classList.remove('show'); }
+function runAiGenerate(){
+  if(aiSelectedMateri.length===0){ toast('Pilih minimal satu materi'); return; }
+  const model = document.getElementById('ai_model').value;
+  const pertemuan = document.getElementById('ai_pertemuan').value || 1;
+  const alokasi = document.getElementById('ai_alokasi').value.trim() || '2 JP';
+  const elemen = document.getElementById('f_elemen').value.trim() || '[Perlu diverifikasi: nama elemen]';
+  const kegiatanTemplate = {
+    'Discovery Learning':'Mengamati fenomena/kasus, merumuskan pertanyaan, mengumpulkan data, mengolah data, menyimpulkan.',
+    'Problem Based Learning':'Mengorientasi masalah, mengorganisasi tugas belajar, membimbing penyelidikan, mengembangkan hasil karya, menganalisis dan mengevaluasi proses.',
+    'Project Based Learning':'Menentukan proyek, merancang langkah kerja, menyusun jadwal, melaksanakan proyek, menyusun laporan dan presentasi.'
+  };
+  const bar = document.getElementById('aiProgressBar'); let pct=0;
+  bar.style.width='0%';
+  const timer = setInterval(()=>{
+    pct += 20; bar.style.width = Math.min(pct,100)+'%';
+    if(pct>=100){
+      clearInterval(timer);
+      aiSelectedMateri.forEach(materi=>{
+        draft.rows.push({
+          elemen: elemen,
+          cp: document.getElementById('f_cp').value.trim() || '[Perlu diverifikasi: isi CP]',
+          tp: `Peserta didik mampu memahami dan menerapkan ${materi.toLowerCase()} sesuai prosedur akuntansi yang berlaku.`,
+          materi: materi,
+          kegiatan: `Model ${model}: ${kegiatanTemplate[model]}`,
+          alokasi: alokasi + (Number(pertemuan)>1 ? (' x '+pertemuan+' pertemuan') : ''),
+          asesmen: 'Tes tertulis, penugasan, dan observasi praktik',
+          sumber: 'Buku DAKL Kelas X, LKPD, sumber belajar digital',
+          verify: true
+        });
+      });
+      autosaveDraft(); renderRowsTable(); closeAiModal(); bar.style.width='0%';
+      toast('Draf ATP otomatis ditambahkan — periksa bagian bertanda "Perlu diverifikasi"');
+    }
+  }, 120);
+}
+
+/* ---------- autosave & reset ---------- */
+function readFormIntoDraft(){
+  draft.identitas = { sekolah:val('f_sekolah'), guru:val('f_guru'), nip:val('f_nip'), mapel:val('f_mapel'),
+    fase:val('f_fase'), kelas:val('f_kelas'), tapel:val('f_tapel'), semester:val('f_semester') };
+  draft.kurikulum = { kurikulum:val('f_kurikulum'), elemen:val('f_elemen'), cp:val('f_cp'), alokasi:val('f_alokasi'), pertemuan:val('f_pertemuan') };
+}
+function val(id){ const el=document.getElementById(id); return el?el.value:''; }
+function fillFormFromDraft(){
+  document.getElementById('f_sekolah').value = draft.identitas.sekolah;
+  document.getElementById('f_guru').value = draft.identitas.guru;
+  document.getElementById('f_nip').value = draft.identitas.nip;
+  document.getElementById('f_mapel').value = draft.identitas.mapel;
+  document.getElementById('f_fase').value = draft.identitas.fase;
+  document.getElementById('f_kelas').value = draft.identitas.kelas;
+  document.getElementById('f_tapel').value = draft.identitas.tapel;
+  document.getElementById('f_semester').value = draft.identitas.semester;
+  document.getElementById('f_kurikulum').value = draft.kurikulum.kurikulum;
+  document.getElementById('f_elemen').value = draft.kurikulum.elemen;
+  document.getElementById('f_cp').value = draft.kurikulum.cp;
+  document.getElementById('f_alokasi').value = draft.kurikulum.alokasi;
+  document.getElementById('f_pertemuan').value = draft.kurikulum.pertemuan;
+}
+let autosaveTimer=null;
+function autosaveDraft(){
+  readFormIntoDraft();
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(()=>{ saveJSON(LS.DRAFT, draft); }, 400);
+}
+document.getElementById('page-buat').addEventListener('input', autosaveDraft);
+function resetForm(){
+  askConfirm('Reset form? Data yang belum disimpan akan hilang.', ()=>{
+    draft = emptyDraft(); saveJSON(LS.DRAFT, draft); fillFormFromDraft(); renderRowsTable(); toast('Form direset');
+  });
+}
+
+/* ---------- validasi & simpan ATP ---------- */
+function validateDraft(){
+  readFormIntoDraft();
+  const errs = [];
+  if(!draft.identitas.sekolah) errs.push('Nama Sekolah wajib diisi');
+  if(!draft.identitas.mapel) errs.push('Mata Pelajaran wajib diisi');
+  if(!draft.identitas.kelas) errs.push('Kelas wajib diisi');
+  if(!draft.identitas.fase) errs.push('Fase wajib diisi');
+  if(!draft.identitas.tapel) errs.push('Tahun Pelajaran wajib diisi');
+  if(!draft.kurikulum.cp) errs.push('Capaian Pembelajaran (CP) wajib diisi');
+  if(!draft.kurikulum.alokasi) errs.push('Alokasi Waktu wajib diisi');
+  if(draft.rows.length===0) errs.push('Minimal satu Tujuan Pembelajaran harus ditambahkan');
+  else draft.rows.forEach((r,i)=>{ if(!r.materi) errs.push('Baris #'+(i+1)+': Materi wajib diisi'); });
+  return errs;
+}
+function saveATP(){
+  const errs = validateDraft();
+  const box = document.getElementById('formErrors');
+  if(errs.length){ box.innerHTML = `<div class="err-msg"><b>Perbaiki data berikut:</b><ul style="margin:6px 0 0 18px;">${errs.map(e=>'<li>'+e+'</li>').join('')}</ul></div>`; box.scrollIntoView({behavior:'smooth'}); return; }
+  box.innerHTML='';
+  const list = getList();
+  const now = Date.now();
+  if(!draft.id){ draft.id = 'atp_'+now; draft.createdAt = now; }
+  draft.updatedAt = now;
+  const idx = list.findIndex(d=>d.id===draft.id);
+  if(idx>-1) list[idx]=draft; else list.push(draft);
+  saveJSON(LS.LIST, list);
+  saveJSON(LS.DRAFT, emptyDraft());
+  toast('ATP berhasil disimpan');
+  const savedDraft = JSON.parse(JSON.stringify(draft));
+  draft = emptyDraft();
+  navigate('data');
+  renderPreviewFromDoc(savedDraft);
+}
+
+/* ---------- daftar ATP tersimpan ---------- */
+function renderATPList(){
+  const list = getList();
+  const q = (document.getElementById('filterSearch').value||'').toLowerCase();
+  const fk = document.getElementById('filterKelas').value;
+  const fs = document.getElementById('filterSemester').value;
+  const filtered = list.filter(d=>{
+    const hay = (d.identitas.sekolah+' '+d.identitas.guru+' '+d.identitas.mapel).toLowerCase();
+    if(q && !hay.includes(q)) return false;
+    if(fk && d.identitas.kelas!==fk) return false;
+    if(fs && d.identitas.semester!==fs) return false;
+    return true;
+  }).sort((a,b)=>b.updatedAt-a.updatedAt);
+  const wrap = document.getElementById('atpListWrap');
+  if(filtered.length===0){ wrap.innerHTML = `<p>Belum ada dokumen ATP yang cocok. Buat ATP baru pada menu "Buat ATP".</p>`; return; }
+  wrap.innerHTML = filtered.map(d=>`
+    <div class="panel" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div>
+          <b>${escapeHtml(d.identitas.mapel)}</b> — ${escapeHtml(d.identitas.sekolah)}<br>
+          <span style="color:var(--text-soft);font-size:12.5px;">Kelas ${escapeHtml(d.identitas.kelas)} • Fase ${escapeHtml(d.identitas.fase)} • ${escapeHtml(d.identitas.semester)} • TP ${escapeHtml(d.identitas.tapel)} • ${d.rows.length} tujuan pembelajaran</span>
+        </div>
+        <div class="row-actions">
+          <button class="btn small no-siswa" onclick="openATP('${d.id}')">Buka / Edit</button>
+          <button class="btn ghost small" onclick="previewATP('${d.id}')">Preview</button>
+          <button class="btn ghost small no-siswa" onclick="duplicateATP('${d.id}')">Duplikasi</button>
+          <button class="btn ghost small no-siswa" onclick="removeATP('${d.id}')" style="color:var(--red);">Hapus</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function openATP(id){
+  const list = getList(); const d = list.find(x=>x.id===id); if(!d) return;
+  draft = JSON.parse(JSON.stringify(d));
+  navigate('buat'); fillFormFromDraft(); renderRowsTable(); toast('ATP dimuat untuk diedit');
+}
+function previewATP(id){ const d = getList().find(x=>x.id===id); if(!d) return; navigate('preview'); renderPreviewFromDoc(d); }
+function duplicateATP(id){
+  const list = getList(); const d = list.find(x=>x.id===id); if(!d) return;
+  const copy = JSON.parse(JSON.stringify(d)); copy.id = 'atp_'+Date.now(); copy.createdAt = copy.updatedAt = Date.now();
+  copy.identitas.sekolah += ' (Salinan)';
+  list.push(copy); saveJSON(LS.LIST, list); renderATPList(); toast('ATP diduplikasi');
+}
+function removeATP(id){
+  askConfirm('Hapus dokumen ATP ini secara permanen?', ()=>{
+    const list = getList().filter(x=>x.id!==id); saveJSON(LS.LIST, list); renderATPList(); toast('ATP dihapus');
+  });
+}
+
+/* ---------- preview dokumen ---------- */
+function renderPreviewFromDraft(){ readFormIntoDraft(); renderPreviewFromDoc(draft); }
+function renderPreviewFromDoc(d){
+  window._previewDoc = d;
+  const box = document.getElementById('docPage');
+  if(!d || !d.rows || d.rows.length===0){ box.innerHTML = '<p style="text-align:center;color:#888;">Belum ada ATP untuk dipratinjau.</p>'; return; }
+  const rows = d.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHtml(r.elemen)}</td><td>${escapeHtml(r.cp)}</td><td>${escapeHtml(r.tp)}</td><td>${escapeHtml(r.materi)}</td><td>${escapeHtml(r.kegiatan)}</td><td>${escapeHtml(r.alokasi)}</td><td>${escapeHtml(r.asesmen)}</td><td>${escapeHtml(r.sumber)}</td></tr>`).join('');
+  box.innerHTML = `
+    <h2>ALUR TUJUAN PEMBELAJARAN</h2>
+    <div class="sub">${escapeHtml(d.identitas.mapel.toUpperCase())}</div>
+    <table class="doc-meta"><tr><td width="160">Satuan Pendidikan</td><td>: ${escapeHtml(d.identitas.sekolah)}</td></tr>
+    <tr><td>Mata Pelajaran</td><td>: ${escapeHtml(d.identitas.mapel)}</td></tr>
+    <tr><td>Fase / Kelas</td><td>: ${escapeHtml(d.identitas.fase)} / ${escapeHtml(d.identitas.kelas)}</td></tr>
+    <tr><td>Tahun Pelajaran</td><td>: ${escapeHtml(d.identitas.tapel)} — Semester ${escapeHtml(d.identitas.semester)}</td></tr>
+    <tr><td>Nama Guru</td><td>: ${escapeHtml(d.identitas.guru)}</td></tr></table>
+    <div class="table-wrap"><table class="atp-table" id="printTable"><thead><tr><th>No</th><th>Elemen</th><th>CP</th><th>Tujuan Pembelajaran</th><th>Materi</th><th>Kegiatan</th><th>Alokasi</th><th>Asesmen</th><th>Sumber</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="sign-block">
+      <div class="col">Mengetahui,<br>Kepala Sekolah<br><span class="sign-line">(........................)</span><br>NIP. ........................</div>
+      <div class="col">&nbsp;<br>Guru Mata Pelajaran<br><span class="sign-line">(........................)</span><br>NIP. ........................</div>
+    </div>`;
+}
+document.querySelectorAll('#page-preview')[0]; // (preview di-render saat navigate/openATP/previewATP)
+
+/* Sebelum mencetak, tandai halaman preview sebagai satu-satunya elemen yang tampil */
+window.addEventListener('beforeprint', ()=>{ document.getElementById('page-preview').classList.add('printing'); });
+window.addEventListener('afterprint', ()=>{ document.getElementById('page-preview').classList.remove('printing'); });
+
+/* ---------- export Word (MIME trick, tanpa library) ---------- */
+function exportWord(){
+  const d = window._previewDoc; if(!d){ toast('Belum ada dokumen untuk diunduh'); return; }
+  const html = `<html><head><meta charset="utf-8"></head><body>${document.getElementById('docPage').innerHTML}</body></html>`;
+  downloadBlob(html, 'application/msword', `ATP_${slug(d.identitas.mapel)}.doc`);
+  toast('Word diunduh');
+}
+/* ---------- export Excel (tabel HTML dibaca Excel) ---------- */
+function exportExcel(){
+  const d = window._previewDoc; if(!d){ toast('Belum ada dokumen untuk diunduh'); return; }
+  const table = document.getElementById('printTable');
+  const html = `<html><head><meta charset="utf-8"></head><body>${table.outerHTML}</body></html>`;
+  downloadBlob(html, 'application/vnd.ms-excel', `ATP_${slug(d.identitas.mapel)}.xls`);
+  toast('Excel diunduh');
+}
+function downloadBlob(content, mime, filename){
+  const blob = new Blob([content], {type:mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+function copyTable(){
+  const table = document.getElementById('printTable'); if(!table){ toast('Belum ada tabel untuk disalin'); return; }
+  try{
+    const blob = new Blob([table.outerHTML], {type:'text/html'});
+    navigator.clipboard.write([new ClipboardItem({'text/html':blob})]).then(()=>toast('Tabel disalin ke clipboard'));
+  }catch(e){
+    const range = document.createRange(); range.selectNode(table);
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(range);
+    document.execCommand('copy'); window.getSelection().removeAllRanges();
+    toast('Tabel disalin ke clipboard');
+  }
+}
+function slug(s){ return (s||'ATP').toLowerCase().replace(/[^a-z0-9]+/g,'_').slice(0,40); }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- inisialisasi ---------- */
+function init(){
+  applyTheme();
+  if(!localStorage.getItem(LS.MATERI)) saveJSON(LS.MATERI, DEFAULT_MATERI);
+  const savedDraft = loadJSON(LS.DRAFT, null);
+  if(savedDraft && (savedDraft.identitas.sekolah || savedDraft.rows.length)) draft = savedDraft;
+  fillFormFromDraft(); fillMateriSelects(); renderRowsTable(); renderDashboard();
+  const user = loadJSON(LS.USER, null);
+  if(user && user.nama && user.role){ enterApp(user); } else { document.getElementById('loginScreen').style.display='flex'; }
+}
+init();
+</script>
+</body>
+</html>
